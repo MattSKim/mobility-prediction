@@ -8,15 +8,16 @@ class WalkerSimulation {
         this.isPlaying = false;
         this.speed = 1.0; // Default speed multiplier
         
-        // Increase SVG size
-        const margin = { top: 40, right: 40, bottom: 40, left: 40 };
-        this.width = 900 - margin.left - margin.right;
-        this.height = 800 - margin.top - margin.bottom;
+        // Adjust margins and size
+        const margin = { top: 20, right: 20, bottom: 40, left: 20 };
+        this.width = 700 - margin.left - margin.right;   // Reduced from 800
+        this.height = 700 - margin.top - margin.bottom;  // Keep same height
         
         this.svg = d3.select("#visualization")
             .append("svg")
-            .attr("width", this.width + margin.left + margin.right)
-            .attr("height", this.height + margin.top + margin.bottom)
+            .attr("width", "100%")    // Make SVG responsive
+            .attr("height", "100%")
+            .attr("viewBox", `0 0 ${this.width + margin.left + margin.right} ${this.height + margin.top + margin.bottom}`)
             .append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
             
@@ -35,6 +36,78 @@ class WalkerSimulation {
 
         // Set up controls
         this.setupControls();
+
+        // Add selected node tracking
+        this.selectedNode = null;
+
+        // Add click handler to nodes
+        this.svg.on('click', (event) => {
+            if (event.target.tagName === 'svg' || event.target.tagName === 'g') {
+                this.selectedNode = null;
+                this.updateNodeInfo();
+            }
+        });
+
+        // Update info container to only show dataset information
+        const infoContainer = document.querySelector('.info-container');
+        infoContainer.innerHTML = `
+            <h2>Dataset Information</h2>
+            <div class="info-section">
+                <div class="info-label">Name</div>
+                <div class="info-value">KTH Walkers Dataset</div>
+            </div>
+            <div class="info-section">
+                <div class="info-label">Description</div>
+                <div class="info-value">
+                    The Ostermalm area consists of a grid of interconnected streets. 14 passages connect the observed area to the outside world. The active area of the outdoor scenario is 5872 m². 
+                    The coordinates are measured in meters (m) relative to a local coordinate system of the observed area.
+
+                    Throughout their lifetime, nodes are constantly moving in the observed area, therefore the scenario can be characterized as a high mobility scenario. Nodes enter the observed area according to a Poisson process with rate λ. 
+                    The arrival rate λ represents the arrival rate at each of the fourteen passages in the area. The speed at which each node traverses the area is chosen from a truncated normal distribution (0.6;2.0) with a mean of 1.3 m/s.
+                    
+                    The traces in this traceset encompass arrival rates between 0.01 and 0.05 nodes/s.
+                    The traces in this set capture mobility at a very fine granularity, namely the position of all observed nodes is recorded every 0.6 seconds.
+                </div>
+            </div>
+            <div class="info-section">
+                <div class="info-label">Parameters</div>
+                <div class="info-value">
+                    <ul>
+                        <li>Arrival rate: λ = 0.01 nodes/s</li>
+                        <li>Area: Downtown Stockholm (Ostermalm)</li>
+                        <li>Recording duration: From t=0 with 0.6s measurement intervals</li>
+                        <li>Dataset published: 2014-05-05</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+
+        // Add statistics and node details to controls container
+        const controlsContainer = document.querySelector('.controls-container');
+        
+        // Create and append statistics section
+        const statsSection = document.createElement('div');
+        statsSection.className = 'info-section';
+        statsSection.innerHTML = `
+            <div class="info-label">Statistics</div>
+            <div class="info-value" id="live-stats">
+                Active nodes: <span id="active-nodes">0</span><br>
+                Total events: <span id="total-events">0</span>
+            </div>
+        `;
+        controlsContainer.appendChild(statsSection);
+
+        // Create and append node details section
+        const nodeDetailsSection = document.createElement('div');
+        nodeDetailsSection.className = 'info-section';
+        nodeDetailsSection.id = 'node-details';
+        nodeDetailsSection.innerHTML = `
+            <div class="info-label">Selected Node Details</div>
+            <div class="info-value" id="node-info">
+                <p class="no-selection">Click a node to see its details</p>
+            </div>
+        `;
+        controlsContainer.appendChild(nodeDetailsSection);
     }
 
     setupControls() {
@@ -55,14 +128,14 @@ class WalkerSimulation {
             speedValue.textContent = this.speed.toFixed(1) + "x";
         });
 
-        // Enhanced timeline slider
+        // Enhanced timeline slider with units
         timeline.addEventListener('input', (event) => {
             // While dragging
             this.isPlaying = false;
             playPauseBtn.textContent = "Play";
             this.currentTime = parseFloat(event.target.value);
             this.updateVisualization();
-            timeLabel.textContent = this.currentTime.toFixed(1);
+            timeLabel.textContent = this.currentTime.toFixed(1) + " s";
         });
 
         timeline.addEventListener('change', (event) => {
@@ -156,9 +229,9 @@ class WalkerSimulation {
             }
         });
         
-        // Add padding to the domain to prevent nodes from touching edges
-        const xPadding = (maxX - minX) * 0.1; // 10% padding
-        const yPadding = (maxY - minY) * 0.1;
+        // Add more padding to the domain to prevent nodes from touching edges
+        const xPadding = (maxX - minX) * 0.15; // Increased from 0.1 to 0.15
+        const yPadding = (maxY - minY) * 0.15;
         
         // Update scales based on data bounds with padding
         this.xScale.domain([minX - xPadding, maxX + xPadding]);
@@ -188,6 +261,34 @@ class WalkerSimulation {
         this.events.sort((a, b) => a.time - b.time);
     }
 
+    updateNodeInfo() {
+        const nodeInfo = document.querySelector('#node-info');
+        if (!this.selectedNode) {
+            nodeInfo.innerHTML = '<p class="no-selection">Click a node to see its details</p>';
+            return;
+        }
+
+        const node = this.nodes.get(this.selectedNode);
+        if (!node) {
+            nodeInfo.innerHTML = '<p class="no-selection">Selected node no longer exists</p>';
+            return;
+        }
+
+        // Calculate speed if we have both current and destination positions
+        let speed = 'N/A';
+        if (node.speed) {
+            speed = node.speed.toFixed(2);
+        }
+
+        nodeInfo.innerHTML = `
+            <ul>
+                <li>Node ID: ${node.id}</li>
+                <li>Position: (${node.x.toFixed(2)}m, ${node.y.toFixed(2)}m)</li>
+                <li>Speed: ${speed} m/s</li>
+            </ul>
+        `;
+    }
+
     updateVisualization() {
         // Get all events up to current time to build node history
         const currentEvents = this.events.filter(e => e.time <= this.currentTime);
@@ -214,10 +315,12 @@ class WalkerSimulation {
                     
                 case 'setdest':
                     if (this.nodes.has(event.nodeId)) {
-                        this.nodes.get(event.nodeId).x = event.x;
-                        this.nodes.get(event.nodeId).y = event.y;
-                        this.nodes.get(event.nodeId).lastUpdate = event.time;
-                        this.nodes.get(event.nodeId).timeAtDest = event.timeAtDest;
+                        const node = this.nodes.get(event.nodeId);
+                        node.x = event.x;
+                        node.y = event.y;
+                        node.lastUpdate = event.time;
+                        node.timeAtDest = event.timeAtDest;
+                        node.speed = event.speed;
                     }
                     break;
                     
@@ -249,10 +352,31 @@ class WalkerSimulation {
             
         const nodesEnter = nodes.enter()
             .append("g")
-            .attr("class", "walker");
+            .attr("class", "walker")
+            .on('click', (event, d) => {
+                event.stopPropagation();
+                this.selectedNode = d[0];
+                
+                // Immediately update all circles' selection state
+                this.nodesGroup.selectAll("circle")
+                    .attr("class", d => d[0] === this.selectedNode ? "selected" : "");
+                    
+                this.updateNodeInfo();
+            });
             
         nodesEnter.append("circle")
-            .attr("r", 5);
+            .attr("r", 5)
+            .attr("class", d => d[0] === this.selectedNode ? "selected" : "")
+            .on('click', (event, d) => {
+                event.stopPropagation();
+                this.selectedNode = d[0];
+                
+                // Immediately update all circles' selection state
+                this.nodesGroup.selectAll("circle")
+                    .attr("class", d => d[0] === this.selectedNode ? "selected" : "");
+                    
+                this.updateNodeInfo();
+            });
             
         nodesEnter.append("text")
             .attr("dx", 8)
@@ -266,6 +390,10 @@ class WalkerSimulation {
             `translate(${this.xScale(d[1].x)},${this.yScale(d[1].y)})`
         );
         
+        nodesUpdate.select("circle")
+            .attr("class", d => d[0] === this.selectedNode ? "selected" : "")
+            .attr("r", d => d[0] === this.selectedNode ? 7 : 5);  // Make selected node bigger
+        
         nodesUpdate.select("text")
             .text(d => d[1].id);
             
@@ -274,7 +402,12 @@ class WalkerSimulation {
 
         // Update timeline slider position
         document.querySelector("#timeline").value = this.currentTime;
-        document.querySelector("#currentTime").textContent = this.currentTime.toFixed(1);
+        document.querySelector("#currentTime").textContent = this.currentTime.toFixed(1) + " s";
+
+        // Update selected node info if one is selected
+        if (this.selectedNode) {
+            this.updateNodeInfo();
+        }
     }
 
     animate() {
@@ -283,7 +416,7 @@ class WalkerSimulation {
         this.updateVisualization();
 
         // Update time display
-        d3.select("#currentTime").text(this.currentTime.toFixed(1));
+        d3.select("#currentTime").text(this.currentTime.toFixed(1) + " s");
 
         // Increase the base time step and multiply by speed
         this.currentTime += 0.5 * this.speed;  // Changed from 0.1 to 0.5
@@ -301,6 +434,11 @@ class WalkerSimulation {
         this.isPlaying = true;
         this.animate();
         d3.select("#playPause").text("Pause");
+        
+        // Initialize timeline labels with units
+        document.querySelector(".time-label").textContent = "0.0 s";
+        document.querySelector("#endTime").textContent = 
+            this.events[this.events.length - 1].time.toFixed(1) + " s";
         
         // Initialize the visualization
         this.updateVisualization();

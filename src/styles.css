@@ -65,12 +65,15 @@ h1 {
     position: relative;
     padding: 60px 20px 20px 20px;
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 #visualization {
     border: 1px solid #ccc;
-    height: calc(100% - 60px);
+    height: 100%;
+    min-height: 600px;
     background: #f8f8f8;
+    overflow: hidden;
 }
 
 .walker {
@@ -106,6 +109,7 @@ button {
     gap: 10px;
     padding: 10px;
     box-sizing: border-box;
+    white-space: nowrap;
 }
 
 #timeline {
@@ -194,19 +198,23 @@ button {
 .container {
     display: flex;
     gap: 20px;
-    height: calc(100% - 40px);
+    height: calc(100vh - 100px);
     box-sizing: border-box;
+    padding: 20px;
+    overflow: hidden;
 }
 
 .visualization-container {
-    width: 900px;
+    flex: 1 1 700px;
+    min-width: 700px;
+    max-width: 900px;
     display: flex;
     flex-direction: column;
     height: 100%;
 }
 
 .controls-container {
-    width: 200px;
+    flex: 0 0 300px;
     padding: 20px;
     background: #f8f8f8;
     border: 1px solid #ccc;
@@ -217,7 +225,7 @@ button {
 }
 
 .info-container {
-    width: 350px;
+    flex: 0 0 350px;
     padding: 20px;
     background: #f8f8f8;
     border: 1px solid #ccc;
@@ -279,4 +287,36 @@ button {
     background: #f5f5f5;
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Add this style for time labels */
+.time-label {
+    white-space: nowrap;
+}
+
+.walker circle {
+    fill: steelblue;
+    stroke: none;
+    cursor: pointer;
+}
+
+.walker circle.selected {
+    fill: #ff6b6b;
+    stroke: #fff;
+    stroke-width: 2px;
+    r: 7;
+}
+
+.no-selection {
+    color: #999;
+    font-style: italic;
+}
+
+#node-details ul {
+    margin: 0;
+    padding-left: 1.2em;
+}
+
+#node-details li {
+    margin: 5px 0;
 } 

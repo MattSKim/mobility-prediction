@@ -1,0 +1,15 @@
+{
+  "hash": "f8343d3e",
+  "configHash": "bb56afb3",
+  "lockfileHash": "e3b0c442",
+  "browserHash": "78bde412",
+  "optimized": {
+    "d3": {
+      "src": "../../node_modules/d3/src/index.js",
+      "file": "d3.js",
+      "fileHash": "c06ba1d0",
+      "needsInterop": false
+    }
+  },
+  "chunks": {}
+}
