@@ -205,16 +205,14 @@ button {
 }
 
 .visualization-container {
-    flex: 1 1 700px;
-    min-width: 700px;
-    max-width: 900px;
+    width: 750px;
     display: flex;
     flex-direction: column;
     height: 100%;
 }
 
 .controls-container {
-    flex: 0 0 300px;
+    width: 300px;
     padding: 20px;
     background: #f8f8f8;
     border: 1px solid #ccc;
@@ -289,11 +287,7 @@ button {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Add this style for time labels */
-.time-label {
-    white-space: nowrap;
-}
-
+/* Add these styles at the end of the file */
 .walker circle {
     fill: steelblue;
     stroke: none;
@@ -319,4 +313,8 @@ button {
 
 #node-details li {
     margin: 5px 0;
+}
+
+.time-label {
+    white-space: nowrap;
 } 
