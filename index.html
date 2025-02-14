@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dataset Visualization</title>
+    <link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+    <!-- Dataset Selection View -->
+    <div id="dataset-view">
+        <div class="header">
+            <h1>Dataset Visualization</h1>
+            <p>Select a dataset to visualize</p>
+        </div>
+        <div class="datasets-container">
+            <button class="dataset-button" onclick="loadDataset('crawdad-kthwalkers')">
+                <div class="dataset-name">KTH Walkers Dataset</div>
+                <div class="dataset-description">
+                    Simulation of walkers in downtown Stockholm with varying parameters.
+                    Traces from pedestrian movements used to study mobility models for opportunistic communications.
+                </div>
+            </button>
+            <!-- Add more dataset buttons here as needed -->
+        </div>
+    </div>
+
+    <!-- Simulation View (initially hidden) -->
+    <div id="simulation-view">
+        <button class="back-button" onclick="goBack()">
+            Back to Datasets
+        </button>
+        <div class="container">
+            <div class="visualization-container">
+                <div id="visualization"></div>
+                <div class="timeline-control">
+                    <span class="time-label">0.0</span>
+                    <input type="range" id="timeline" style="width: 100%;">
+                    <span class="time-label" id="endTime">0.0</span>
+                    <div class="timeline-tooltip"></div>
+                </div>
+            </div>
+            
+            <div class="controls-container">
+                <div id="controls">
+                    <button id="playPause">Play</button>
+                    <div class="speed-control">
+                        <label>Playback Speed:</label>
+                        <input type="range" id="speed" min="0.1" max="20" step="0.1" value="1">
+                        <span id="speedValue">1.0x</span>
+                    </div>
+                    <div class="time-display">
+                        Current Time: <span id="currentTime">0.0</span>
+                    </div>
+                </div>
+                <div id="debug"></div>
+            </div>
+            
+            <div class="info-container">
+                <h2>Dataset Information</h2>
+                <div class="info-section">
+                    <div class="info-label">Name</div>
+                    <div class="info-value">KTH Walkers - Ostermalm_001_1</div>
+                </div>
+                <div class="info-section">
+                    <div class="info-label">Description</div>
+                    <div class="info-value">
+                        Walkers in downtown Stockholm with arrival rate 0.01 (run 1).
+                        Simulation of pedestrian movements in an urban environment.
+                    </div>
+                </div>
+                <div class="info-section">
+                    <div class="info-label">Parameters</div>
+                    <div class="info-value">
+                        <ul>
+                            <li>Arrival rate: λ = 0.01 nodes/s</li>
+                            <li>Area: Downtown Stockholm</li>
+                            <li>Last modified: 2014-05-05</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="info-section">
+                    <div class="info-label">Statistics</div>
+                    <div class="info-value" id="live-stats">
+                        Active nodes: <span id="active-nodes">0</span><br>
+                        Total events: <span id="total-events">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { WalkerSimulation } from './src/walker-viz.js';
+        
+        window.goBack = function() {
+            // Show dataset view and hide simulation
+            document.getElementById('dataset-view').style.display = 'block';
+            document.getElementById('simulation-view').style.display = 'none';
+        };
+        
+        window.loadDataset = function(datasetId) {
+            // Hide dataset view and show simulation
+            document.getElementById('dataset-view').style.display = 'none';
+            document.getElementById('simulation-view').style.display = 'block';
+            
+            // Initialize simulation
+            const simulation = new WalkerSimulation();
+            simulation.loadData('datasets/crawdad-kthwalkers/ostermalm_001_1.tr.gz')
+                .then(() => {
+                    console.log('Data loaded:', simulation.events.length, 'events');
+                    document.getElementById('debug').textContent = `Loaded ${simulation.events.length} events`;
+                    simulation.start();
+                })
+                .catch(error => {
+                    console.error('Error loading data:', error);
+                    document.getElementById('debug').textContent = `Error: ${error.message}`;
+                });
+        };
+    </script>
+</body>
+</html> 
