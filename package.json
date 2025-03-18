@@ -1,0 +1,10 @@
+{
+  "name": "mobility-prediction",
+  "version": "1.0.0",
+  "description": "Mobility prediction visualization",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "viz": "open index.html"
+  }
+} 
